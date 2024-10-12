@@ -8,7 +8,7 @@ configuracao = Executable(
 
 setup(
     name='Busca Cartórios Brasil',
-    version='2.0',
+    version='2.1',
     description='Este programa faz uma busca de cartórios situados na cidade de determinado Estado informados pelo usuário.',
     author='Gabriel Alves Silva',
     options={'build_exee':{

@@ -1,6 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -13,7 +11,7 @@ import openpyxl
 class ScrapyDados():
     def __init__(self):
         chrome_options = Options()
-        arguments = ['--lang=pt-BR', '--headless', '--incognito', '--disable-notifications']
+        arguments = ['--lang=pt-BR', '--start-maximized', '--incognito', '--disable-notifications']
         for argument in arguments:
             chrome_options.add_argument(argument)
 
@@ -22,9 +20,8 @@ class ScrapyDados():
             'profile.default_content_setting_values.notifications': 2,
             'profile.default_content_setting_values.automatic_downloads': 1,
         })
-        self.driver = webdriver.Chrome(service=ChromeService(
-            ChromeDriverManager().install()), options=chrome_options)
-        
+        self.driver = webdriver.Chrome(options=chrome_options)
+
         self.wait = WebDriverWait(
             driver=self.driver,
             timeout=10,
@@ -36,7 +33,7 @@ class ScrapyDados():
                 ElementNotInteractableException
             ]
         )
-        
+
     def acessar_estado(self, estado, url):
         self.driver.get(url=url)
         try:
@@ -47,30 +44,31 @@ class ScrapyDados():
             continuar_button.click()
         except:
             pass
-        
+
         click_button = self.wait.until(expected_conditions.visibility_of_any_elements_located((By.LINK_TEXT, "Clique aqui")))
         click_button[0].click()
-        
+
         sleep(2)
-        self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);')
+        self.driver.execute_script('window.scrollTo(0, document.body.scrollHeight);'); sleep(2)
         while True:
             if len(estado) > 2:
                 try:
-                    estado_element = self.driver.find_element(By.XPATH, f"//area[@title='{estado}']")
-                    estado_element.click()
+                    estado_element = self.driver.find_element(By.XPATH, f"//area[@title='{estado.capitalize()}']")
+                    self.driver.execute_script('arguments[0].click()', estado_element)
                     break
                 except:
                     ScrapyDados.formatar_titulo('ATENÇÃO: Nome ou sigla do estado não encontrado. Verifique se foi inserido o nome correto e tente novamente.')
-                    estado = str(input('Informe o ESTADO onde a cidade se situa [sigla ou nome completo e acentuado] >>> '))
+                    estado = str(input('Informe o ESTADO onde a cidade se situa [sigla ou nome completo e acentuado] >>> ')).strip()
             else:
+                print(estado, len(estado))
                 try:
                     estado_element = self.driver.find_element(By.XPATH, f'//area[@onclick="pesquisaServentiasExtra(\'{str(estado).upper()}\')"]')
-                    estado_element.click()
+                    self.driver.execute_script('arguments[0].click()', estado_element)
                     break
                 except:
                     ScrapyDados.formatar_titulo('ATENÇÃO: Nome ou sigla do estado não encontrado. Verifique se foi inserido o nome correto e tente novamente.')
                     estado = str(input('Informe o ESTADO onde a cidade se situa [sigla ou nome completo e acentuado] >>> '))
-    
+
     def acessar_cidade(self, cidade):
         select_campo = self.wait.until(expected_conditions.element_to_be_clickable((By.XPATH, "//select[@id='cidade_serventia']")))
         select_cidade = Select(select_campo)
@@ -81,11 +79,11 @@ class ScrapyDados():
             except:
                 ScrapyDados.formatar_titulo(f'ATENÇÃO: Cidade [{cidade}] não encontrada. Verifique se a cidade inserida está escrita corretamente e tente novamente.')
                 cidade = str(input('Informe o nome da cidade >>> ')).strip().upper()
-        
+
         pesquisar_button = self.driver.find_elements(By.XPATH, "//button[@type='submit']")[-1]
         pesquisar_button.click()
         return cidade
-    
+
     def extrair_dados(self, planilha, cidade):
         quantidade_field = self.wait.until(expected_conditions.element_to_be_clickable((By.NAME, "display_length")))
         select_quantidade = Select(quantidade_field)
@@ -132,7 +130,7 @@ class ScrapyDados():
         for linha in linhas:
             city_page.append(linha)
         book.save(f'{wb_name}.xlsx')
-        
+
     @staticmethod
     def formatar_titulo(text):
         print('-'*(len(text)+4))
@@ -143,10 +141,10 @@ ScrapyDados.formatar_titulo('Bem-vindo à Busca por Cartórios')
 site = "https://www.cnj.jus.br/corregedoria/justica_aberta/?"
 while True:
     estado = str(input('Informe o ESTADO onde a cidade se situa [sigla ou nome completo e acentuado] >>> ')).strip()
-    cidades = str(input('''Informe os nomes das CIDADES do mesmo estado, separados por ", "  
+    cidades = str(input('''Informe os nomes das CIDADES do mesmo estado, separados por ", "
 Ex.: Belo Horizonte, Curvelo, Varginha, Diamantina  >>> ''')).strip().upper().split(', ')
     nome_planilha = str(input('''Informe o nome da planilha onde serão armazenados esses dados.
-Obs.: Caso queira armazenar os dados em uma planilha já existente na pasta, apenas informe o nome exato dela. 
+Obs.: Caso queira armazenar os dados em uma planilha já existente na pasta, apenas informe o nome exato dela.
 Informe o nome sem a extensão ".XLSX" e sem espaços no nome. Ex.: Cartorios_Minas_Gerais
 
 >>> '''))
@@ -165,6 +163,6 @@ Informe o nome sem a extensão ".XLSX" e sem espaços no nome. Ex.: Cartorios_Mi
             break
         else:
             ScrapyDados.formatar_titulo('ATENÇÃO: digite somente [s] para sim ou [n] não.')
-    
+
     if continuar == 'n':
         break
