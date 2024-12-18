@@ -1,4 +1,4 @@
-# Scrapy_Dados_de_Cartorios - Freelancer
+# Scrapy Dados de Cartorios - Freelancer
 ## Objetivo
 #### Desenvolver um sistema de coleta de dados de todos os cartórios das cidade solicitadas pelo usuário e armazenar as informações coletadas em um arquivo EXCEL separando os cartórios de cada cidade por planilhas dentro do mesmo arquivo.
 ## Procedimentos
